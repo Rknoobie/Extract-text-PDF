@@ -1,0 +1,79 @@
+import re
+from pypdf import PdfReader
+
+# Create a pdf reader object
+reader = PdfReader('sample-invoice.pdf')
+
+# Get the first page of the PDF
+page = reader.pages[0]
+
+# Extract text from the page
+text = page.extract_text()
+
+# Function to extract data using regular expressions
+def extract_invoice_data(text):
+    data = {}
+
+    # Extract Vendor Name (e.g. "CPB Software (Germany) GmbH")
+    vendor_name_match = re.search(r"^(.+?)\n", text)
+    if vendor_name_match:
+        data["Vendor Name"] = vendor_name_match.group(1).strip()
+    else:
+        data["Vendor Name"] = "Not found"
+
+    # Extract Billing Address (e.g. "Im Bruch 3 - 63897 Miltenberg/Main")
+    billing_address_match = re.search(r"(\w+\s*\w+\s*\d+\s*-?\s*\d+.*)", text)
+    if billing_address_match:
+        data["Billing Address"] = billing_address_match.group(1).strip()
+    else:
+        data["Billing Address"] = "Not found"
+
+    # Extract Invoice No (e.g. "Invoice No: 123100401")
+    invoice_no_match = re.search(r"Invoice No[:\s]*(\d+)", text)
+    if invoice_no_match:
+        data["Invoice No"] = invoice_no_match.group(1)
+    else:
+        data["Invoice No"] = "Not found"
+
+    # Extract Date (e.g. "Date: 1. März 2024")
+    date_match = re.search(r"Date[:\s]*(\d+\.\s*\w+\s*\d+)", text)
+    if date_match:
+        data["Date"] = date_match.group(1)
+    else:
+        data["Date"] = "Not found"
+
+    # Extract Customer No (e.g. "Customer No: 12345")
+    customer_no_match = re.search(r"Customer No[:\s]*(\d+)", text)
+    if customer_no_match:
+        data["Customer No"] = customer_no_match.group(1)
+    else:
+        data["Customer No"] = "Not found"
+
+    # Extract Invoice Period (e.g. "Invoice Period: 01.02.2024 - 29.02.2024")
+    invoice_period_match = re.search(r"Invoice Period[:\s]*(.*?)(?=\n|$)", text)
+    if invoice_period_match:
+        data["Invoice Period"] = invoice_period_match.group(1).strip()
+    else:
+        data["Invoice Period"] = "Not found"
+
+    # Extract Total Amount (e.g. "Total Amount: 453,53 €")
+    total_amount_match = re.search(r"Gross Amount incl. VAT\s*(\d+,\d+)\s*€", text)
+    if total_amount_match:
+        data["Total Amount"] = total_amount_match.group(1) + " €"
+    else:
+        data["Total Amount"] = "Not found"
+
+    return data
+
+# Call the function to extract data
+invoice_data = extract_invoice_data(text)
+
+# Output the extracted information with improved formatting
+print("Extracted Invoice Information:")
+print(f"Vendor Name: {invoice_data['Vendor Name']}")
+print(f"Billing Address: {invoice_data['Billing Address']}")
+print(f"Invoice No: {invoice_data['Invoice No']}")
+print(f"Date: {invoice_data['Date']}")
+print(f"Customer No: {invoice_data['Customer No']}")
+print(f"Invoice Period: {invoice_data['Invoice Period']}")
+print(f"Total Amount: {invoice_data['Total Amount']}")

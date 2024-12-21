@@ -1,0 +1,23 @@
+import re
+from pypdf import PdfReader
+
+# creating a pdf reader object
+reader = PdfReader('sample-invoice.pdf')
+
+# extracting text from all pages
+text = ""
+for page in reader.pages:
+    text += page.extract_text()
+
+# extracting specific details using regular expressions
+invoice_no = re.search(r"Invoice No\s+(\d+)", text)
+date = re.search(r"Date\s+([\w\s.]+)", text)
+total_amount = re.search(r"Gross Amount incl\. VAT\s+([\d,]+\.\d{2} €)", text)
+
+# printing extracted details
+if invoice_no:
+    print(f"Invoice No: {invoice_no.group(1)}")
+if date:
+    print(f"Date: {date.group(1)}")
+if total_amount:
+    print(f"Gross Amount (incl. VAT): {total_amount.group(1)}")

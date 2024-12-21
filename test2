@@ -1,5 +1,7 @@
 #install pip install pypdf below the terminal
-
+# bash pwd (to check currect directionary which is mentioned blow /workpsaces/Extract-text-PDF)
+# /workspaces/Extract-text-PDF
+# bash ls (Run this line in bash to see files and folders in your current directory)
 # importing required modules
 
 from pypdf import PdfReader
@@ -8,7 +10,7 @@ from pypdf import PdfReader
 reader = PdfReader('sample-invoice.pdf')
 
 # printing number of pages in pdf file
-print(len(reader.pages))
+print(f"Total number of pages: {len(reader.pages)}")
 
 # getting a specific page from the pdf file
 page = reader.pages[0]
