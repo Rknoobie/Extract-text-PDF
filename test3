@@ -1,23 +1,52 @@
-import re
-from pypdf import PdfReader
+def process_invoices(script_directory):
+    # Find all PDF files in the script's directory
+    pdf_files = glob(os.path.join(script_directory, "*.pdf"))
+    if not pdf_files:
+        print("No PDF files found in the script's directory.")
+        return
 
-# creating a pdf reader object
-reader = PdfReader('sample-invoice.pdf')
+    for pdf_file in pdf_files:
+        # Create a PDF reader object
+        reader = PdfReader(pdf_file)
 
-# extracting text from all pages
-text = ""
-for page in reader.pages:
-    text += page.extract_text()
+        # Loop through all pages in the PDF
+        for page_number, page in enumerate(reader.pages):
+            # Extract text from the page
+            text = page.extract_text()
 
-# extracting specific details using regular expressions
-invoice_no = re.search(r"Invoice No\s+(\d+)", text)
-date = re.search(r"Date\s+([\w\s.]+)", text)
-total_amount = re.search(r"Gross Amount incl\. VAT\s+([\d,]+\.\d{2} €)", text)
+            # Print the raw text to help with debugging
+            print(f"--- Raw text from {pdf_file} (page {page_number + 1}) ---")
+            print(text)
+            print("--- End of page text ---")
 
-# printing extracted details
-if invoice_no:
-    print(f"Invoice No: {invoice_no.group(1)}")
-if date:
-    print(f"Date: {date.group(1)}")
-if total_amount:
-    print(f"Gross Amount (incl. VAT): {total_amount.group(1)}")
+            invoice_data = extract_invoice_data(text)
+
+            # Get vendor name
+            vendor_name = invoice_data["Vendor Name"]
+            if vendor_name == "Not found":
+                print(f"Vendor name not found in {pdf_file} on page {page_number + 1}")
+                continue
+
+            # Clean the vendor name to create a folder
+            clean_vendor_name = re.sub(r'[\/:*?"<>|]', "_", vendor_name)
+
+            # Limit the length of the folder name to avoid overly long paths
+            clean_vendor_name = clean_vendor_name.split(" - ")[0][:50]
+
+            # Create a folder for the vendor
+            vendor_folder = os.path.join(script_directory, "invoices", clean_vendor_name)
+            os.makedirs(vendor_folder, exist_ok=True)
+
+            # Save the extracted invoice data into a text file inside the folder
+            output_file = os.path.join(vendor_folder, f"invoice_page_{page_number + 1}.txt")
+            with open(output_file, "w") as file:
+                for key, value in invoice_data.items():
+                    file.write(f"{key}: {value}\n")
+
+            print(f"Invoice from {vendor_name} saved to {vendor_folder}")
+
+# Set the directory where the script is located
+script_directory = os.path.dirname(os.path.realpath(__file__))
+
+# Call the function to process the invoices
+process_invoices(script_directory)
